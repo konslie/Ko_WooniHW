@@ -51,9 +51,7 @@ export default function Dashboard({ currentDate, workLogs }) {
         </div>
       </div>
       
-      <div className="dashboard-actions">
-        <button className="action-button">💌 카카오톡 공유</button>
-      </div>
+
     </div>
   );
 }

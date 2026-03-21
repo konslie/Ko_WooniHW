@@ -66,3 +66,21 @@
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
 }
+
+@media (max-width: 600px) {
+  .dashboard-wrapper h3 {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  .dashboard-card {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .dashboard-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
+  .dashboard-value {
+    font-size: 1.25rem;
+  }
+}

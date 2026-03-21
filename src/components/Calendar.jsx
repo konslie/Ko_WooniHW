@@ -32,12 +32,12 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           <h2 style={{ userSelect: 'none' }}>
             <span onClick={onAdminToggle} style={{ cursor: 'pointer' }}>🐯</span> 운이의 돌봄 달력 {isAdmin && <Unlock size={18} color="var(--accent-color)" style={{marginLeft: '4px'}} />} • {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
           </h2>
+        </div>
+        <div className="header-right">
           <button onClick={goToday} className="today-button">오늘</button>
           <button onClick={onShare} className="icon-button" disabled={isSharing} title="카카오톡/이미지 공유">
             <Share size={18} />
           </button>
-        </div>
-        <div className="header-right">
           <button onClick={prevMonth} className="icon-button"><ChevronLeft size={24} /></button>
           <button onClick={nextMonth} className="icon-button"><ChevronRight size={24} /></button>
         </div>

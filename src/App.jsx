@@ -98,7 +98,7 @@ function App() {
       setTimeout(async () => {
         try {
           const canvas = await html2canvas(appRef.current, {
-            scale: 2,
+            scale: 4, // 4x multiplier for super crisp PNG export
             useCORS: true,
             backgroundColor: '#fcefe3'
           });
