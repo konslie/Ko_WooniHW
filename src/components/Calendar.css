@@ -162,7 +162,7 @@
   margin-top: 0.25rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -179,7 +179,7 @@
 .duration-badge {
   background: #ff4d6d;
   color: white;
-  padding: 2px 4px;
+  padding: 2px 1px;
   border-radius: var(--radius-sm);
   font-size: clamp(8px, 18cqw, 15px);
   font-weight: 700;
@@ -194,7 +194,7 @@
 .time-badge {
   background: var(--accent-color);
   color: white;
-  padding: 2px 4px;
+  padding: 2px 1px;
   border-radius: var(--radius-sm);
   font-size: clamp(8px, 17cqw, 14px);
   font-weight: 700;
@@ -216,7 +216,7 @@
 .no-care-badge {
   background: rgba(0, 0, 0, 0.08);
   color: var(--text-secondary);
-  padding: 2px 4px;
+  padding: 2px 1px;
   border-radius: var(--radius-sm);
   font-size: clamp(7px, 16cqw, 14px);
   font-weight: 700;
