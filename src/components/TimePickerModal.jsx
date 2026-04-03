@@ -87,9 +87,14 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
            parsedCareReason = existingMemo;
         }
 
-        const initialLogType = existingLog.isNoCare ? 'noCare' : 'care';
+        const initialLogType = existingLog.isNoCare ? 'noCare' : (existingLog.startTime ? 'care' : 'none');
         setLogType(initialLogType);
-        setActiveTab(initialLogType);
+        
+        let initialTab = initialLogType;
+        if (initialLogType === 'none') {
+           initialTab = parsedSpecialReason ? 'special' : 'care';
+        }
+        setActiveTab(initialTab);
         
         setCareReason(parsedCareReason);
         setSpecialType(parsedSpecialType);
@@ -152,7 +157,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         startTime: null,
         endTime: null
       });
-    } else {
+    } else if (logType === 'care') {
       const sH = startHour === 12 ? 12 : startHour + 12; // Assuming PM
       const eH = endHour === 12 ? 12 : endHour + 12;
       onSave({
@@ -161,6 +166,14 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         memo: finalMemo,
         startTime: `${sH}:${startMin}`,
         endTime: `${eH}:${endMin}`
+      });
+    } else {
+      onSave({
+        date: date.formattedDate,
+        isNoCare: false,
+        memo: finalMemo,
+        startTime: null,
+        endTime: null
       });
     }
     onClose();
@@ -183,52 +196,89 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
 
         <div className="modal-body">
           <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
-             <button className={`toggle-btn ${activeTab === 'care' ? 'active' : ''}`} onClick={() => { setActiveTab('care'); setLogType('care'); }}>돌봄 제공</button>
-             <button className={`toggle-btn ${activeTab === 'noCare' ? 'active-no-care' : ''}`} onClick={() => { setActiveTab('noCare'); setLogType('noCare'); }}>돌봄 미제공</button>
-             <button className={`toggle-btn ${activeTab === 'special' ? 'active-special' : ''}`} onClick={() => setActiveTab('special')} style={{color: activeTab === 'special' ? '#ffffff' : 'inherit', backgroundColor: activeTab === 'special' ? '#008924' : ''}}>특이사항</button>
+             <button 
+               className={`toggle-btn ${logType === 'care' ? 'active' : ''}`} 
+               onClick={() => { 
+                 if (activeTab === 'care') setLogType(logType === 'care' ? 'none' : 'care'); 
+                 else { setActiveTab('care'); setLogType('care'); } 
+               }}>
+               돌봄 제공
+             </button>
+             <button 
+               className={`toggle-btn ${logType === 'noCare' ? 'active-no-care' : ''}`} 
+               onClick={() => { 
+                 if (activeTab === 'noCare') setLogType(logType === 'noCare' ? 'none' : 'noCare'); 
+                 else { setActiveTab('noCare'); setLogType('noCare'); } 
+               }}>
+               돌봄 미제공
+             </button>
+             <button 
+               className={`toggle-btn ${activeTab === 'special' ? 'active-special' : ''}`} 
+               onClick={() => setActiveTab('special')} 
+               style={{color: activeTab === 'special' ? '#ffffff' : 'inherit', backgroundColor: activeTab === 'special' ? '#008924' : ''}}>
+               특이사항
+             </button>
           </div>
           
           {activeTab === 'care' && (
             <>
-              <p className="modal-desc">모든 시간은 <strong>오후(PM)</strong> 기준입니다. 위아래로 스와이프 하세요.</p>
-              
-              <div className="time-pickers-container">
-                {/* Start Time */}
-                <div className="time-picker-group">
-                  <span className="picker-label">시작 시간</span>
-                  <div className="wheels">
-                    <ScrollColumn items={HOURS} selectedValue={startHour} onChange={setStartHour} />
-                    <span className="colon">:</span>
-                    <ScrollColumn items={MINUTES_5} selectedValue={startMin} onChange={setStartMin} />
-                  </div>
-                </div>
+              {logType === 'care' ? (
+                <>
+                  <p className="modal-desc">모든 시간은 <strong>오후(PM)</strong> 기준입니다. 위아래로 스와이프 하세요.</p>
+                  
+                  <div className="time-pickers-container">
+                    {/* Start Time */}
+                    <div className="time-picker-group">
+                      <span className="picker-label">시작 시간</span>
+                      <div className="wheels">
+                        <ScrollColumn items={HOURS} selectedValue={startHour} onChange={setStartHour} />
+                        <span className="colon">:</span>
+                        <ScrollColumn items={MINUTES_5} selectedValue={startMin} onChange={setStartMin} />
+                      </div>
+                    </div>
 
-                <div className="time-separator">-</div>
+                    <div className="time-separator">-</div>
 
-                {/* End Time */}
-                <div className="time-picker-group">
-                  <span className="picker-label">종료 시간</span>
-                  <div className="wheels">
-                    <ScrollColumn items={HOURS} selectedValue={endHour} onChange={setEndHour} />
-                    <span className="colon">:</span>
-                    <ScrollColumn items={MINUTES_5} selectedValue={endMin} onChange={setEndMin} />
+                    {/* End Time */}
+                    <div className="time-picker-group">
+                      <span className="picker-label">종료 시간</span>
+                      <div className="wheels">
+                        <ScrollColumn items={HOURS} selectedValue={endHour} onChange={setEndHour} />
+                        <span className="colon">:</span>
+                        <ScrollColumn items={MINUTES_5} selectedValue={endMin} onChange={setEndMin} />
+                      </div>
+                    </div>
                   </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', margin: '40px 0', fontSize: '14px', color: '#666' }}>
+                  🚫 돌봄 시간이 선택되지 않았습니다.<br/><br/>
+                  입력하려면 상단의 <strong>[돌봄 제공]</strong> 버튼을 다시 눌러주세요.
                 </div>
-              </div>
+              )}
             </>
           )}
           
           {activeTab === 'noCare' && (
             <div className="no-care-container">
-               <p className="modal-desc">돌봄을 제공하지 않은 사유를 간단히 적어주세요.</p>
-               <input 
-                 type="text" 
-                 className="reason-input" 
-                 placeholder="예: 가족 휴가, 명절 결근 등"
-                 value={careReason}
-                 onChange={(e) => setCareReason(e.target.value)}
-                 autoFocus
-               />
+               {logType === 'noCare' ? (
+                 <>
+                   <p className="modal-desc">돌봄을 제공하지 않은 사유를 간단히 적어주세요.</p>
+                   <input 
+                     type="text" 
+                     className="reason-input" 
+                     placeholder="예: 가족 휴가, 명절 결근 등"
+                     value={careReason}
+                     onChange={(e) => setCareReason(e.target.value)}
+                     autoFocus
+                   />
+                 </>
+               ) : (
+                <div style={{ textAlign: 'center', margin: '40px 0', fontSize: '14px', color: '#666' }}>
+                  🚫 돌봄 미제공 상태가 아닙니다.<br/><br/>
+                  사유를 입력하려면 상단의 <strong>[돌봄 미제공]</strong> 버튼을 다시 눌러주세요.
+                </div>
+               )}
             </div>
           )}
 
