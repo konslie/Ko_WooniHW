@@ -87,13 +87,23 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
            parsedCareReason = existingMemo;
         }
 
-        const initialLogType = existingLog.isNoCare ? 'noCare' : (existingLog.startTime ? 'care' : 'none');
-        setLogType(initialLogType);
+        const todayOffset = new Date(new Date().getTime() + 9 * 60 * 60 * 1000); // KST
+        const todayStr = todayOffset.toISOString().split('T')[0];
+        const isFuture = date.formattedDate > todayStr;
+
+        let initialLogType = existingLog.isNoCare ? 'noCare' : (existingLog.startTime ? 'care' : 'none');
         
         let initialTab = initialLogType;
         if (initialLogType === 'none') {
-           initialTab = parsedSpecialReason ? 'special' : 'care';
+           if (isFuture) {
+              initialTab = parsedSpecialReason ? 'special' : 'care';
+           } else {
+              initialLogType = 'care';
+              initialTab = 'care';
+           }
         }
+        
+        setLogType(initialLogType);
         setActiveTab(initialTab);
         
         setCareReason(parsedCareReason);
