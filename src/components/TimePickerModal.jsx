@@ -43,8 +43,10 @@ function ScrollColumn({ items, selectedValue, onChange }) {
 
 export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelete, existingLog }) {
   const [logType, setLogType] = useState('care');
-  const [reason, setReason] = useState('');
+  const [careReason, setCareReason] = useState('');
+  const [hasSpecial, setHasSpecial] = useState(false);
   const [specialType, setSpecialType] = useState('체험학습');
+  const [specialReason, setSpecialReason] = useState('');
   const [startHour, setStartHour] = useState(4);
   const [startMin, setStartMin] = useState('50');
   const [endHour, setEndHour] = useState(6);
@@ -54,24 +56,50 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   useEffect(() => {
     if (isOpen) {
       if (existingLog) {
-        if (existingLog.isNoCare) {
-          setLogType('noCare');
-          setReason(existingLog.memo || '');
-        } else if (!existingLog.startTime && existingLog.memo?.startsWith('[SPECIAL]')) {
-          setLogType('special');
-          const contentStr = existingLog.memo.replace('[SPECIAL]', '').trim();
+        let parsedCareReason = '';
+        let parsedHasSpecial = false;
+        let parsedSpecialType = '체험학습';
+        let parsedSpecialReason = '';
+
+        const existingMemo = existingLog.memo || '';
+        
+        if (existingMemo.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(existingMemo);
+            parsedCareReason = parsed.careReason || '';
+            if (parsed.special) {
+              parsedHasSpecial = true;
+              parsedSpecialType = parsed.special.type;
+              parsedSpecialReason = parsed.special.text;
+            }
+          } catch(e) {
+            parsedCareReason = existingMemo;
+          }
+        } else if (existingMemo.startsWith('[SPECIAL]')) {
+          parsedHasSpecial = true;
+          const contentStr = existingMemo.replace('[SPECIAL]', '').trim();
           const splitIdx = contentStr.indexOf('|');
           if (splitIdx > -1) {
-            setSpecialType(contentStr.substring(0, splitIdx));
-            setReason(contentStr.substring(splitIdx + 1));
+            parsedSpecialType = contentStr.substring(0, splitIdx);
+            parsedSpecialReason = contentStr.substring(splitIdx + 1);
           } else {
-            setSpecialType('체험학습');
-            setReason(contentStr);
+            parsedSpecialType = '체험학습';
+            parsedSpecialReason = contentStr;
           }
         } else {
-          setLogType('care');
-          setReason('');
+           parsedCareReason = existingMemo;
         }
+
+        if (existingLog.isNoCare) {
+          setLogType('noCare');
+        } else {
+          setLogType('care');
+        }
+        
+        setCareReason(parsedCareReason);
+        setHasSpecial(parsedHasSpecial);
+        setSpecialType(parsedSpecialType);
+        setSpecialReason(parsedSpecialReason);
         
         if (existingLog.startTime && existingLog.endTime) {
           const [sH, sM] = existingLog.startTime.split(':').map(Number);
@@ -94,7 +122,10 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         }
       } else {
         setLogType('care');
-        setReason('');
+        setCareReason('');
+        setHasSpecial(false);
+        setSpecialType('체험학습');
+        setSpecialReason('');
         setStartHour(4);
         setStartMin('50');
         setEndHour(6);
@@ -106,19 +137,23 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   if (!isOpen || !date) return null;
 
   const handleSave = () => {
+    const memoObj = {
+      careReason: logType === 'noCare' ? careReason : '',
+      special: hasSpecial ? { type: specialType, text: specialReason } : null
+    };
+
+    let finalMemo = '';
+    if (hasSpecial) {
+      finalMemo = JSON.stringify(memoObj);
+    } else {
+      finalMemo = logType === 'noCare' ? careReason : '';
+    }
+
     if (logType === 'noCare') {
       onSave({
         date: date.formattedDate,
         isNoCare: true,
-        memo: reason,
-        startTime: null,
-        endTime: null
-      });
-    } else if (logType === 'special') {
-      onSave({
-        date: date.formattedDate,
-        isNoCare: false,
-        memo: `[SPECIAL]${specialType}|${reason}`,
+        memo: finalMemo,
         startTime: null,
         endTime: null
       });
@@ -128,7 +163,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
       onSave({
         date: date.formattedDate,
         isNoCare: false,
-        memo: '',
+        memo: finalMemo,
         startTime: `${sH}:${startMin}`,
         endTime: `${eH}:${endMin}`
       });
@@ -152,10 +187,10 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         </header>
 
         <div className="modal-body">
+          <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>1. 하원 돌봄 설정</h4>
           <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
              <button className={`toggle-btn ${logType === 'care' ? 'active' : ''}`} onClick={() => setLogType('care')}>돌봄 제공</button>
              <button className={`toggle-btn ${logType === 'noCare' ? 'active-no-care' : ''}`} onClick={() => setLogType('noCare')}>돌봄 미제공</button>
-             <button className={`toggle-btn ${logType === 'special' ? 'active-special' : ''}`} onClick={() => setLogType('special')} style={{color: logType === 'special' ? '#ffffff' : 'inherit', backgroundColor: logType === 'special' ? '#008924' : ''}}>특이사항</button>
           </div>
           
           {logType === 'care' && (
@@ -195,14 +230,20 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
                  type="text" 
                  className="reason-input" 
                  placeholder="예: 가족 휴가, 명절 결근 등"
-                 value={reason}
-                 onChange={(e) => setReason(e.target.value)}
+                 value={careReason}
+                 onChange={(e) => setCareReason(e.target.value)}
                  autoFocus
                />
             </div>
           )}
 
-          {logType === 'special' && (
+          <h4 style={{ margin: '24px 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>2. 등원 특이사항</h4>
+          <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
+             <button className={`toggle-btn ${!hasSpecial ? 'active' : ''}`} onClick={() => setHasSpecial(false)}>특이사항 없음</button>
+             <button className={`toggle-btn ${hasSpecial ? 'active-special' : ''}`} onClick={() => setHasSpecial(true)} style={{color: hasSpecial ? '#ffffff' : 'inherit', backgroundColor: hasSpecial ? '#008924' : ''}}>특이사항 있음</button>
+          </div>
+
+          {hasSpecial && (
             <div className="no-care-container">
                <p className="modal-desc" style={{color: '#008924', fontWeight: 'bold'}}>운이의 등원 특이사항을 기재해주세요.</p>
                
@@ -241,8 +282,8 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
                  type="text" 
                  className="reason-input" 
                  placeholder="내용 (예: 동우체육복)"
-                 value={reason}
-                 onChange={(e) => setReason(e.target.value)}
+                 value={specialReason}
+                 onChange={(e) => setSpecialReason(e.target.value)}
                  autoFocus
                />
             </div>

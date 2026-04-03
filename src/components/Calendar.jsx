@@ -62,18 +62,38 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           else if (dayOfWeek === 6) extraClasses.push('weekend'); // Saturday
 
           const log = workLogs && workLogs[day.formattedDate];
-          const isSpecial = log && !log.isNoCare && !log.startTime && log.memo?.startsWith('[SPECIAL]');
+          
+          let careReason = '';
+          let isSpecial = false;
           let specialTypeLabel = '특이사항';
           let specialText = '';
-          if (isSpecial) {
-             const contentStr = (log.memo || '').replace('[SPECIAL]', '').trim();
-             const splitIdx = contentStr.indexOf('|');
-             if (splitIdx > -1) {
-               specialTypeLabel = contentStr.substring(0, splitIdx);
-               specialText = contentStr.substring(splitIdx + 1);
+          
+          if (log && log.memo) {
+             if (log.memo.startsWith('{')) {
+                try {
+                  const parsed = JSON.parse(log.memo);
+                  careReason = parsed.careReason || '';
+                  if (parsed.special) {
+                    isSpecial = true;
+                    specialTypeLabel = parsed.special.type;
+                    specialText = parsed.special.text;
+                  }
+                } catch(e) {
+                  careReason = log.memo;
+                }
+             } else if (log.memo.startsWith('[SPECIAL]')) {
+                isSpecial = true;
+                const contentStr = log.memo.replace('[SPECIAL]', '').trim();
+                const splitIdx = contentStr.indexOf('|');
+                if (splitIdx > -1) {
+                  specialTypeLabel = contentStr.substring(0, splitIdx);
+                  specialText = contentStr.substring(splitIdx + 1);
+                } else {
+                  specialTypeLabel = '체험학습';
+                  specialText = contentStr;
+                }
              } else {
-               specialTypeLabel = '체험학습';
-               specialText = contentStr;
+                careReason = log.memo;
              }
           }
 
@@ -98,7 +118,7 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
                 {log && log.isNoCare && (
                   <div className="time-log no-care-wrap">
                     <span className="no-care-badge">돌봄없는날</span>
-                    {log.memo && <span className="no-care-memo">{log.memo}</span>}
+                    {careReason && <span className="no-care-memo">{careReason}</span>}
                   </div>
                 )}
                 {isSpecial && (
