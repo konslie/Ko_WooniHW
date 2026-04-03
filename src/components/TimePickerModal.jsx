@@ -120,8 +120,18 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
           setEndMin('50');
         }
       } else {
-        setLogType('care');
-        setActiveTab('care');
+        const todayOffset = new Date(new Date().getTime() + 9 * 60 * 60 * 1000); // KST
+        const todayStr = todayOffset.toISOString().split('T')[0];
+        const isFuture = date.formattedDate > todayStr;
+
+        if (isFuture) {
+          setLogType('none');
+          setActiveTab('special');
+        } else {
+          setLogType('care');
+          setActiveTab('care');
+        }
+        
         setCareReason('');
         setSpecialType('체험학습');
         setSpecialReason('');
@@ -131,7 +141,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         setEndMin('50');
       }
     }
-  }, [isOpen, existingLog]);
+  }, [isOpen, existingLog, date]);
 
   if (!isOpen || !date) return null;
 
