@@ -42,9 +42,9 @@ function ScrollColumn({ items, selectedValue, onChange }) {
 }
 
 export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelete, existingLog }) {
+  const [activeTab, setActiveTab] = useState('care');
   const [logType, setLogType] = useState('care');
   const [careReason, setCareReason] = useState('');
-  const [hasSpecial, setHasSpecial] = useState(false);
   const [specialType, setSpecialType] = useState('체험학습');
   const [specialReason, setSpecialReason] = useState('');
   const [startHour, setStartHour] = useState(4);
@@ -57,7 +57,6 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
     if (isOpen) {
       if (existingLog) {
         let parsedCareReason = '';
-        let parsedHasSpecial = false;
         let parsedSpecialType = '체험학습';
         let parsedSpecialReason = '';
 
@@ -68,7 +67,6 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
             const parsed = JSON.parse(existingMemo);
             parsedCareReason = parsed.careReason || '';
             if (parsed.special) {
-              parsedHasSpecial = true;
               parsedSpecialType = parsed.special.type;
               parsedSpecialReason = parsed.special.text;
             }
@@ -76,7 +74,6 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
             parsedCareReason = existingMemo;
           }
         } else if (existingMemo.startsWith('[SPECIAL]')) {
-          parsedHasSpecial = true;
           const contentStr = existingMemo.replace('[SPECIAL]', '').trim();
           const splitIdx = contentStr.indexOf('|');
           if (splitIdx > -1) {
@@ -90,14 +87,11 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
            parsedCareReason = existingMemo;
         }
 
-        if (existingLog.isNoCare) {
-          setLogType('noCare');
-        } else {
-          setLogType('care');
-        }
+        const initialLogType = existingLog.isNoCare ? 'noCare' : 'care';
+        setLogType(initialLogType);
+        setActiveTab(initialLogType);
         
         setCareReason(parsedCareReason);
-        setHasSpecial(parsedHasSpecial);
         setSpecialType(parsedSpecialType);
         setSpecialReason(parsedSpecialReason);
         
@@ -122,8 +116,8 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         }
       } else {
         setLogType('care');
+        setActiveTab('care');
         setCareReason('');
-        setHasSpecial(false);
         setSpecialType('체험학습');
         setSpecialReason('');
         setStartHour(4);
@@ -137,6 +131,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   if (!isOpen || !date) return null;
 
   const handleSave = () => {
+    const hasSpecial = specialReason.trim() !== '';
     const memoObj = {
       careReason: logType === 'noCare' ? careReason : '',
       special: hasSpecial ? { type: specialType, text: specialReason } : null
@@ -187,13 +182,13 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         </header>
 
         <div className="modal-body">
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>1. 하원 돌봄 설정</h4>
           <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
-             <button className={`toggle-btn ${logType === 'care' ? 'active' : ''}`} onClick={() => setLogType('care')}>돌봄 제공</button>
-             <button className={`toggle-btn ${logType === 'noCare' ? 'active-no-care' : ''}`} onClick={() => setLogType('noCare')}>돌봄 미제공</button>
+             <button className={`toggle-btn ${activeTab === 'care' ? 'active' : ''}`} onClick={() => { setActiveTab('care'); setLogType('care'); }}>돌봄 제공</button>
+             <button className={`toggle-btn ${activeTab === 'noCare' ? 'active-no-care' : ''}`} onClick={() => { setActiveTab('noCare'); setLogType('noCare'); }}>돌봄 미제공</button>
+             <button className={`toggle-btn ${activeTab === 'special' ? 'active-special' : ''}`} onClick={() => setActiveTab('special')} style={{color: activeTab === 'special' ? '#ffffff' : 'inherit', backgroundColor: activeTab === 'special' ? '#008924' : ''}}>특이사항</button>
           </div>
           
-          {logType === 'care' && (
+          {activeTab === 'care' && (
             <>
               <p className="modal-desc">모든 시간은 <strong>오후(PM)</strong> 기준입니다. 위아래로 스와이프 하세요.</p>
               
@@ -223,7 +218,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
             </>
           )}
           
-          {logType === 'noCare' && (
+          {activeTab === 'noCare' && (
             <div className="no-care-container">
                <p className="modal-desc">돌봄을 제공하지 않은 사유를 간단히 적어주세요.</p>
                <input 
@@ -237,13 +232,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
             </div>
           )}
 
-          <h4 style={{ margin: '24px 0 10px 0', fontSize: '1rem', color: 'var(--text-primary)' }}>2. 등원 특이사항</h4>
-          <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
-             <button className={`toggle-btn ${!hasSpecial ? 'active' : ''}`} onClick={() => setHasSpecial(false)}>특이사항 없음</button>
-             <button className={`toggle-btn ${hasSpecial ? 'active-special' : ''}`} onClick={() => setHasSpecial(true)} style={{color: hasSpecial ? '#ffffff' : 'inherit', backgroundColor: hasSpecial ? '#008924' : ''}}>특이사항 있음</button>
-          </div>
-
-          {hasSpecial && (
+          {activeTab === 'special' && (
             <div className="no-care-container">
                <p className="modal-desc" style={{color: '#008924', fontWeight: 'bold'}}>운이의 등원 특이사항을 기재해주세요.</p>
                
