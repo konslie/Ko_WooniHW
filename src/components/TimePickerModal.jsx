@@ -42,8 +42,9 @@ function ScrollColumn({ items, selectedValue, onChange }) {
 }
 
 export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelete, existingLog }) {
-  const [isNoCare, setIsNoCare] = useState(false);
+  const [logType, setLogType] = useState('care');
   const [reason, setReason] = useState('');
+  const [specialType, setSpecialType] = useState('체험학습');
   const [startHour, setStartHour] = useState(4);
   const [startMin, setStartMin] = useState('50');
   const [endHour, setEndHour] = useState(6);
@@ -53,8 +54,24 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   useEffect(() => {
     if (isOpen) {
       if (existingLog) {
-        setIsNoCare(existingLog.isNoCare || false);
-        setReason(existingLog.memo || '');
+        if (existingLog.isNoCare) {
+          setLogType('noCare');
+          setReason(existingLog.memo || '');
+        } else if (!existingLog.startTime && existingLog.memo?.startsWith('[SPECIAL]')) {
+          setLogType('special');
+          const contentStr = existingLog.memo.replace('[SPECIAL]', '').trim();
+          const splitIdx = contentStr.indexOf('|');
+          if (splitIdx > -1) {
+            setSpecialType(contentStr.substring(0, splitIdx));
+            setReason(contentStr.substring(splitIdx + 1));
+          } else {
+            setSpecialType('체험학습');
+            setReason(contentStr);
+          }
+        } else {
+          setLogType('care');
+          setReason('');
+        }
         
         if (existingLog.startTime && existingLog.endTime) {
           const [sH, sM] = existingLog.startTime.split(':').map(Number);
@@ -76,7 +93,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
           setEndMin('50');
         }
       } else {
-        setIsNoCare(false);
+        setLogType('care');
         setReason('');
         setStartHour(4);
         setStartMin('50');
@@ -89,11 +106,19 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   if (!isOpen || !date) return null;
 
   const handleSave = () => {
-    if (isNoCare) {
+    if (logType === 'noCare') {
       onSave({
         date: date.formattedDate,
         isNoCare: true,
         memo: reason,
+        startTime: null,
+        endTime: null
+      });
+    } else if (logType === 'special') {
+      onSave({
+        date: date.formattedDate,
+        isNoCare: false,
+        memo: `[SPECIAL]${specialType}|${reason}`,
         startTime: null,
         endTime: null
       });
@@ -127,12 +152,13 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         </header>
 
         <div className="modal-body">
-          <div className="toggle-wrapper">
-             <button className={`toggle-btn ${!isNoCare ? 'active' : ''}`} onClick={() => setIsNoCare(false)}>돌봄 제공</button>
-             <button className={`toggle-btn ${isNoCare ? 'active-no-care' : ''}`} onClick={() => setIsNoCare(true)}>돌봄 미제공</button>
+          <div className="toggle-wrapper" style={{ display: 'flex', gap: '4px' }}>
+             <button className={`toggle-btn ${logType === 'care' ? 'active' : ''}`} onClick={() => setLogType('care')}>돌봄 제공</button>
+             <button className={`toggle-btn ${logType === 'noCare' ? 'active-no-care' : ''}`} onClick={() => setLogType('noCare')}>돌봄 미제공</button>
+             <button className={`toggle-btn ${logType === 'special' ? 'active-special' : ''}`} onClick={() => setLogType('special')} style={{color: logType === 'special' ? '#ffffff' : 'inherit', backgroundColor: logType === 'special' ? '#008924' : ''}}>특이사항</button>
           </div>
           
-          {!isNoCare ? (
+          {logType === 'care' && (
             <>
               <p className="modal-desc">모든 시간은 <strong>오후(PM)</strong> 기준입니다. 위아래로 스와이프 하세요.</p>
               
@@ -160,13 +186,61 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
                 </div>
               </div>
             </>
-          ) : (
+          )}
+          
+          {logType === 'noCare' && (
             <div className="no-care-container">
                <p className="modal-desc">돌봄을 제공하지 않은 사유를 간단히 적어주세요.</p>
                <input 
                  type="text" 
                  className="reason-input" 
                  placeholder="예: 가족 휴가, 명절 결근 등"
+                 value={reason}
+                 onChange={(e) => setReason(e.target.value)}
+                 autoFocus
+               />
+            </div>
+          )}
+
+          {logType === 'special' && (
+            <div className="no-care-container">
+               <p className="modal-desc" style={{color: '#008924', fontWeight: 'bold'}}>운이의 등원 특이사항을 기재해주세요.</p>
+               
+               <div style={{ display: 'flex', gap: '8px', margin: '4px 0 12px 0' }}>
+                 <button 
+                   className={`toggle-btn`} 
+                   onClick={(e) => { e.preventDefault(); setSpecialType('체험학습'); }} 
+                   style={{ 
+                     flex: 1, 
+                     padding: '8px', 
+                     borderRadius: '6px', 
+                     border: specialType === '체험학습' ? 'none' : '1px solid #ddd',
+                     backgroundColor: specialType === '체험학습' ? '#008924' : '#fff',
+                     color: specialType === '체험학습' ? '#fff' : '#666',
+                     fontWeight: specialType === '체험학습' ? 'bold' : 'normal'
+                   }}>
+                   체험학습
+                 </button>
+                 <button 
+                   className={`toggle-btn`} 
+                   onClick={(e) => { e.preventDefault(); setSpecialType('특이사항'); }} 
+                   style={{ 
+                     flex: 1, 
+                     padding: '8px', 
+                     borderRadius: '6px', 
+                     border: specialType === '특이사항' ? 'none' : '1px solid #ddd',
+                     backgroundColor: specialType === '특이사항' ? '#008924' : '#fff',
+                     color: specialType === '특이사항' ? '#fff' : '#666',
+                     fontWeight: specialType === '특이사항' ? 'bold' : 'normal'
+                   }}>
+                   특이사항
+                 </button>
+               </div>
+
+               <input 
+                 type="text" 
+                 className="reason-input" 
+                 placeholder="내용 (예: 동우체육복)"
                  value={reason}
                  onChange={(e) => setReason(e.target.value)}
                  autoFocus

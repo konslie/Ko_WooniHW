@@ -62,6 +62,20 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           else if (dayOfWeek === 6) extraClasses.push('weekend'); // Saturday
 
           const log = workLogs && workLogs[day.formattedDate];
+          const isSpecial = log && !log.isNoCare && !log.startTime && log.memo?.startsWith('[SPECIAL]');
+          let specialTypeLabel = '특이사항';
+          let specialText = '';
+          if (isSpecial) {
+             const contentStr = (log.memo || '').replace('[SPECIAL]', '').trim();
+             const splitIdx = contentStr.indexOf('|');
+             if (splitIdx > -1) {
+               specialTypeLabel = contentStr.substring(0, splitIdx);
+               specialText = contentStr.substring(splitIdx + 1);
+             } else {
+               specialTypeLabel = '체험학습';
+               specialText = contentStr;
+             }
+          }
 
           return (
             <div 
@@ -85,6 +99,28 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
                   <div className="time-log no-care-wrap">
                     <span className="no-care-badge">돌봄없는날</span>
                     {log.memo && <span className="no-care-memo">{log.memo}</span>}
+                  </div>
+                )}
+                {isSpecial && (
+                  <div className="time-log no-care-wrap" style={{ marginTop: 'auto', width: '100%' }}>
+                    <span style={{
+                      backgroundColor: '#008924',
+                      color: '#ffffff',
+                      padding: '1px 0',
+                      borderRadius: '3px',
+                      fontSize: 'clamp(8px, 19cqw, 14px)',
+                      fontWeight: '700',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                      width: '100%',
+                      textAlign: 'center',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      boxSizing: 'border-box'
+                    }}>
+                      {specialTypeLabel}
+                    </span>
+                    {specialText && <span className="no-care-memo">{specialText}</span>}
                   </div>
                 )}
               </div>
