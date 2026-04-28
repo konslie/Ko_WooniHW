@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- Supabase 무료 요건(7일 미접속 시 정지)을 회피하기 위해 Vercel Serverless Function(`api/keep-alive.js`) 및 Vercel Cron Job(`vercel.json`) 추가. 매일 자정 자동 실행되어 DB 활성 상태 유지.
+
 ## [0.3.0] - 2026-04-03
 ### Added
 - 돌봄 달력 내 하위 범주인 '특이사항' 항목 추가 (체험학습 및 특이사항 등 등원 관련 메모 기능).

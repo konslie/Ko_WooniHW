@@ -1,5 +1,13 @@
 # Memory
 
+## Session: 2026-04-28
+- **Current Progress**: Supabase 무료 티어 '7일 미접속 자동 일시정지' 방지를 위한 서버리스 핑(Ping) 자동화 구축 완료.
+- **Goal**: 하원관리 웹의 안정적인 24/365 백엔드 DB 구동 보장.
+- **Technical Decisions**:
+  - 앱 사용 빈도와 관계없이 Vercel 서버에서 매일 자정 자동으로 Supabase DB에 빈 쿼리 요청을 보내 접속 기록을 생성하는 `api/keep-alive.js` 함수 개발.
+  - Vercel의 무료 Cron Jobs 기능을 활용하여 외부의 의존성 없이 `vercel.json` 설정 파일만으로 예약 작업을 스케줄링.
+- **Next Step**: 사용자가 Supabase 대시보드에서 Project를 Unpause 하고, GitHub에 푸시하여 Vercel 배포 트리거 모니터링.
+
 ## Session: 2026-03-21
 - **Current Progress**: 전체 프론트엔드 개발, Supabase 데이터 연동, 그리고 최종 모바일 UI 폴리싱 및 Vercel 자동 배포 환경(CI/CD) 구축 완료.
 - **Goal**: 사용자가 모바일 사파리 환경에서 접속 시, 글씨가 작거나 화면이 잘리지 않고 완벽하게 한 화면(1 Screen)에 동작하도록 반응형 레이아웃 극한 최적화 달성.

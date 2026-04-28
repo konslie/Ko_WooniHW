@@ -11,7 +11,8 @@
   align-items: center;
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -88,6 +89,7 @@
 .weekday-header.sunday {
   color: var(--holiday-color);
 }
+
 .weekday-header.saturday {
   color: var(--weekend-color);
 }
@@ -243,20 +245,64 @@
 }
 
 @media (max-width: 600px) {
-  .calendar-header { margin-bottom: 1rem; flex-direction: column; align-items: center; gap: 0.75rem; }
-  .calendar-header h2 { font-size: clamp(1rem, 4.5vw, 1.35rem); }
-  .icon-button { width: 34px; height: 34px; flex-shrink: 0; }
-  .today-button { padding: 0.3rem 0.5rem; font-size: 0.8rem; flex-shrink: 0; }
-  .calendar-cell { padding: 2px; min-height: 80px; border-radius: 6px; }
-  .day-number { font-size: 0.85rem; }
-  .holiday-name { font-size: 0.55rem; max-width: 100%; padding: 1px 2px; }
-  .time-badge, .duration-badge { letter-spacing: -0.5px; }
-  .time-log { gap: 2px; }
-  .no-care-memo { margin-top: 2px; }
-  .weekday-header { font-size: 0.8rem; }
-  
-  .calendar-grid { 
-    gap: 2px; 
-    grid-template-rows: 30px repeat(auto-fit, minmax(75px, auto)); 
+  .calendar-header {
+    margin-bottom: 1rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .calendar-header h2 {
+    font-size: clamp(1rem, 4.5vw, 1.35rem);
+  }
+
+  .icon-button {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .today-button {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .calendar-cell {
+    padding: 2px;
+    min-height: 80px;
+    border-radius: 6px;
+  }
+
+  .day-number {
+    font-size: 0.85rem;
+  }
+
+  .holiday-name {
+    font-size: 0.55rem;
+    max-width: 100%;
+    padding: 1px 2px;
+  }
+
+  .time-badge,
+  .duration-badge {
+    letter-spacing: -0.5px;
+  }
+
+  .time-log {
+    gap: 2px;
+  }
+
+  .no-care-memo {
+    margin-top: 2px;
+  }
+
+  .weekday-header {
+    font-size: 0.8rem;
+  }
+
+  .calendar-grid {
+    gap: 2px;
+    grid-template-rows: 30px repeat(auto-fit, minmax(75px, auto));
   }
 }
