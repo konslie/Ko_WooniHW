@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- 여러 날짜를 일괄 선택하여 동일한 돌봄 시간이나 특이사항을 한 번에 입력(저장/수정/삭제)할 수 있는 '일괄 입력 모드(Bulk Input Mode)' 기능 추가.
+- 일괄 입력 모드 전용 UI 도입: 체크리스트 버튼 토글, 선택된 날짜 다중 하이라이팅, N개의 날짜 일괄 처리 플로팅 액션 바.
 - Supabase 무료 요건(7일 미접속 시 정지)을 회피하기 위해 Vercel Serverless Function(`api/keep-alive.js`) 및 Vercel Cron Job(`vercel.json`) 추가. 매일 자정 자동 실행되어 DB 활성 상태 유지.
 
 ## [0.3.0] - 2026-04-03

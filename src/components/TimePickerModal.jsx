@@ -41,7 +41,7 @@ function ScrollColumn({ items, selectedValue, onChange }) {
   );
 }
 
-export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelete, existingLog }) {
+export default function TimePickerModal({ isOpen, onClose, dates, onSave, onDelete, existingLog }) {
   const [activeTab, setActiveTab] = useState('care');
   const [logType, setLogType] = useState('care');
   const [careReason, setCareReason] = useState('');
@@ -89,7 +89,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
 
         const todayOffset = new Date(new Date().getTime() + 9 * 60 * 60 * 1000); // KST
         const todayStr = todayOffset.toISOString().split('T')[0];
-        const isFuture = date.formattedDate > todayStr;
+        const isFuture = dates && dates.length === 1 && dates[0].formattedDate > todayStr;
 
         let initialLogType = existingLog.isNoCare ? 'noCare' : (existingLog.startTime ? 'care' : 'none');
         
@@ -132,7 +132,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
       } else {
         const todayOffset = new Date(new Date().getTime() + 9 * 60 * 60 * 1000); // KST
         const todayStr = todayOffset.toISOString().split('T')[0];
-        const isFuture = date.formattedDate > todayStr;
+        const isFuture = dates && dates.length === 1 && dates[0].formattedDate > todayStr;
 
         if (isFuture) {
           setLogType('none');
@@ -151,9 +151,9 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         setEndMin('50');
       }
     }
-  }, [isOpen, existingLog, date]);
+  }, [isOpen, existingLog, dates]);
 
-  if (!isOpen || !date) return null;
+  if (!isOpen || !dates || dates.length === 0) return null;
 
   const handleSave = () => {
     const hasSpecial = specialReason.trim() !== '';
@@ -169,9 +169,11 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
       finalMemo = logType === 'noCare' ? careReason : '';
     }
 
+    const datesArr = dates.map(d => d.formattedDate);
+
     if (logType === 'noCare') {
       onSave({
-        date: date.formattedDate,
+        dates: datesArr,
         isNoCare: true,
         memo: finalMemo,
         startTime: null,
@@ -181,7 +183,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
       const sH = startHour === 12 ? 12 : startHour + 12; // Assuming PM
       const eH = endHour === 12 ? 12 : endHour + 12;
       onSave({
-        date: date.formattedDate,
+        dates: datesArr,
         isNoCare: false,
         memo: finalMemo,
         startTime: `${sH}:${startMin}`,
@@ -189,7 +191,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
       });
     } else {
       onSave({
-        date: date.formattedDate,
+        dates: datesArr,
         isNoCare: false,
         memo: finalMemo,
         startTime: null,
@@ -200,8 +202,13 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
   };
 
   const handleDeleteClick = () => {
-    if (window.confirm(`${date.formattedDate} 기록을 정말 삭제하시겠습니까?`)) {
-      onDelete(date.formattedDate);
+    const datesArr = dates.map(d => d.formattedDate);
+    const confirmMsg = dates.length > 1 
+      ? `선택한 ${dates.length}개의 기록을 정말 일괄 삭제하시겠습니까?`
+      : `${dates[0].formattedDate} 기록을 정말 삭제하시겠습니까?`;
+      
+    if (window.confirm(confirmMsg)) {
+      onDelete(datesArr);
       onClose();
     }
   };
@@ -210,7 +217,7 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
         <header className="modal-header">
-          <h3>🎒 {date.formattedDate} 하원 기록</h3>
+          <h3>🎒 {dates.length > 1 ? `${dates.length}일 일괄 적용` : `${dates[0].formattedDate} 하원 기록`}</h3>
           <button className="close-btn" onClick={onClose}><X size={24} /></button>
         </header>
 
@@ -350,10 +357,14 @@ export default function TimePickerModal({ isOpen, onClose, date, onSave, onDelet
         </div>
 
         <footer className="modal-footer">
-          {existingLog && (
-            <button className="delete-btn" onClick={handleDeleteClick}>삭제하기</button>
+          {(existingLog || dates.length > 1) && (
+            <button className="delete-btn" onClick={handleDeleteClick}>
+              {dates.length > 1 ? '일괄 삭제' : '삭제하기'}
+            </button>
           )}
-          <button className="save-btn" onClick={handleSave}>✨ 저장하기</button>
+          <button className="save-btn" onClick={handleSave}>
+            ✨ {dates.length > 1 ? '일괄 저장' : '저장하기'}
+          </button>
         </footer>
       </div>
     </div>

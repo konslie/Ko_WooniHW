@@ -1,5 +1,15 @@
 # Memory
 
+## Session: 2026-04-29
+- **Current Progress**: 다중 날짜 일괄 입력 기능(Bulk Input Mode) 개발 완료.
+- **Goal**: 여러 날짜를 선택하여 한 번의 조작으로 동일한 돌봄 시간이나 특이사항(체험학습 등)을 일괄 적용(upsert)하여 사용자의 반복 입력 피로도를 낮춤.
+- **Technical Decisions**:
+  - `App.jsx`에서 `isBulkMode` 및 `selectedDates` 배열 상태를 관리하고, 일괄 선택된 날짜 배열을 하위 컴포넌트로 전달.
+  - `Calendar.jsx`에 체크리스트 아이콘 토글 버튼을 추가하고, 여러 셀 다중 선택을 시각화(CSS `selected-for-bulk`)하며 화면 하단에 플로팅 확정 버튼 렌더링.
+  - `TimePickerModal.jsx`이 단일 날짜 객체뿐만 아니라 날짜 객체 배열도 수용하도록 prop을 `dates`로 범용화.
+  - `handleSaveTime` 및 `handleDeleteTime`에서 배열 맵핑을 통해 복수의 딕셔너리 페이로드를 생성하고, Supabase의 `upsert`와 `in` 필터를 활용하여 원격 쿼리를 1회로 최적화.
+- **Next Step**: 사용자가 직접 조작하며 예외 케이스(UX) 테스트 및 피드백 반영.
+
 ## Session: 2026-04-28
 - **Current Progress**: Supabase 무료 티어 '7일 미접속 자동 일시정지' 방지를 위한 서버리스 핑(Ping) 자동화 구축 완료.
 - **Goal**: 하원관리 웹의 안정적인 24/365 백엔드 DB 구동 보장.

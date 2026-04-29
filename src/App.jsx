@@ -10,6 +10,8 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [selectedDates, setSelectedDates] = useState([]);
   const [workLogs, setWorkLogs] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -39,30 +41,53 @@ function App() {
     setIsAdmin(!isAdmin);
   };
 
+  const handleBulkToggle = () => {
+    setIsBulkMode(prev => {
+      if (prev) {
+        setSelectedDates([]); // clear when turning off
+      }
+      return !prev;
+    });
+  };
+
   const handleDateClick = (day) => {
     if (!isAdmin) {
       alert('열람 전용 모드입니다. 달력의 일정을 추가하거나 변경할 수 없습니다.');
       return;
     }
-    setSelectedDay(day);
-    setModalOpen(true);
+    if (isBulkMode) {
+      setSelectedDates(prev => {
+        const isAlreadySelected = prev.find(d => d.formattedDate === day.formattedDate);
+        if (isAlreadySelected) {
+          return prev.filter(d => d.formattedDate !== day.formattedDate);
+        } else {
+          return [...prev, day];
+        }
+      });
+    } else {
+      setSelectedDay(day);
+      setModalOpen(true);
+    }
   };
 
-  const handleSaveTime = async ({ date, startTime, endTime, isNoCare, memo }) => {
+  const handleSaveTime = async ({ dates, startTime, endTime, isNoCare, memo }) => {
     // 1. Optimistic UI update
-    setWorkLogs(prev => ({
-      ...prev,
-      [date]: { startTime, endTime, isNoCare, memo }
-    }));
+    setWorkLogs(prev => {
+      const newLogs = { ...prev };
+      dates.forEach(d => {
+        newLogs[d] = { startTime, endTime, isNoCare, memo };
+      });
+      return newLogs;
+    });
 
-    // 2. Save to Supabase (Upsert based on date)
-    const payload = {
-      date,
+    // 2. Save to Supabase (Upsert array)
+    const payload = dates.map(d => ({
+      date: d,
       is_no_care: isNoCare || false,
       start_time: startTime,
       end_time: endTime,
       memo: memo || ''
-    };
+    }));
 
     const { error } = await supabase
       .from('care_logs')
@@ -71,22 +96,34 @@ function App() {
     if (error) {
       console.error('Supabase DB 반영 에러:', error);
       alert('데이터베이스 저장 중 오류가 발생했습니다.');
+    } else {
+      if (isBulkMode) {
+        setSelectedDates([]);
+        setModalOpen(false);
+      }
     }
   };
 
-  const handleDeleteTime = async (date) => {
+  const handleDeleteTime = async (dates) => {
     // 1. Optimistic UI Update
     setWorkLogs(prev => {
       const newLogs = { ...prev };
-      delete newLogs[date];
+      dates.forEach(d => {
+        delete newLogs[d];
+      });
       return newLogs;
     });
 
     // 2. Delete from Supabase
-    const { error } = await supabase.from('care_logs').delete().eq('date', date);
+    const { error } = await supabase.from('care_logs').delete().in('date', dates);
     if (error) {
       console.error('Supabase DB 삭제 에러:', error);
       alert('데이터베이스 삭제 중 오류가 발생했습니다.');
+    } else {
+      if (isBulkMode) {
+        setSelectedDates([]);
+        setModalOpen(false);
+      }
     }
   };
 
@@ -156,6 +193,10 @@ function App() {
           onAdminToggle={handleAdminToggle}
           onShare={handleShare}
           isSharing={isSharing}
+          isBulkMode={isBulkMode}
+          onBulkToggle={handleBulkToggle}
+          selectedDates={selectedDates}
+          onOpenBulkModal={() => setModalOpen(true)}
         />
       </main>
       
@@ -169,8 +210,8 @@ function App() {
       <TimePickerModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        date={selectedDay}
-        existingLog={selectedDay ? workLogs[selectedDay.formattedDate] : null}
+        dates={isBulkMode ? selectedDates : (selectedDay ? [selectedDay] : [])}
+        existingLog={!isBulkMode && selectedDay ? workLogs[selectedDay.formattedDate] : null}
         onSave={handleSaveTime}
         onDelete={handleDeleteTime}
       />

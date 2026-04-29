@@ -1,12 +1,12 @@
 import React from 'react';
 import { getCalendarDays } from '../utils/calendar';
-import { ChevronLeft, ChevronRight, Unlock, Share } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Unlock, Share, CheckSquare } from 'lucide-react';
 import { addMonths, subMonths } from 'date-fns';
 import './Calendar.css';
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
-export default function Calendar({ currentDate, setCurrentDate, onDateClick, workLogs, isAdmin, onAdminToggle, onShare, isSharing }) {
+export default function Calendar({ currentDate, setCurrentDate, onDateClick, workLogs, isAdmin, onAdminToggle, onShare, isSharing, isBulkMode, onBulkToggle, selectedDates, onOpenBulkModal }) {
   const days = getCalendarDays(currentDate);
 
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -38,6 +38,15 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           <button onClick={onShare} className="icon-button" disabled={isSharing} title="카카오톡/이미지 공유">
             <Share size={18} />
           </button>
+          {isAdmin && (
+            <button 
+              onClick={onBulkToggle} 
+              className={`icon-button ${isBulkMode ? 'active' : ''}`} 
+              title="일괄 선택 모드"
+            >
+              <CheckSquare size={18} color={isBulkMode ? 'var(--accent-color)' : 'currentColor'} />
+            </button>
+          )}
           <button onClick={prevMonth} className="icon-button"><ChevronLeft size={24} /></button>
           <button onClick={nextMonth} className="icon-button"><ChevronRight size={24} /></button>
         </div>
@@ -60,6 +69,10 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           const dayOfWeek = day.date.getDay();
           if (day.isHoliday || dayOfWeek === 0) extraClasses.push('holiday'); // Red day
           else if (dayOfWeek === 6) extraClasses.push('weekend'); // Saturday
+
+          if (isBulkMode && selectedDates && selectedDates.some(d => d.formattedDate === day.formattedDate)) {
+            extraClasses.push('selected-for-bulk');
+          }
 
           const log = workLogs && workLogs[day.formattedDate];
           
@@ -148,6 +161,15 @@ export default function Calendar({ currentDate, setCurrentDate, onDateClick, wor
           );
         })}
       </div>
+
+      {isBulkMode && selectedDates && selectedDates.length > 0 && (
+        <div className="bulk-action-bar">
+          <span className="bulk-count">{selectedDates.length}일 선택됨</span>
+          <button className="bulk-apply-btn" onClick={onOpenBulkModal}>
+            일괄 입력하기
+          </button>
+        </div>
+      )}
     </div>
   );
 }
